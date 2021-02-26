@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-// const SHA512_CONSTANTS[80] = {
+// const uint64_t K[80] = {
 //     428a2f98d728ae22 7137449123ef65cd b5c0fbcfec4d3b2f e9b5dba58189dbbc
 //     3956c25bf348b538 59f111f1b605d019 923f82a4af194f9b ab1c5ed5da6d8118
 //     d807aa98a3030242 12835b0145706fbe 243185be4ee4b28c 550c7dc3d5ffb4e2
@@ -24,21 +24,74 @@
 //     4cc5d4becb3e42b6 597f299cfc657e2a 5fcb6fab3ad6faec 6c44198c4a475817
 // };
 
-// const H[8] = {6a09e667f3bcc908, bb67ae8584caa73b, 3c6ef372fe94f82b, a54ff53a5f1d36f1, 510e527fade682d1, 9b05688c2b3e6c1f, 1f83d9abfb41bd6b, 5be0cd19137e2179};
+// const uint64_t H[8] = {
+//     6a09e667f3bcc908,
+//     bb67ae8584caa73b,
+//     3c6ef372fe94f82b,
+//     a54ff53a5f1d36f1,
+//     510e527fade682d1,
+//     9b05688c2b3e6c1f,
+//     1f83d9abfb41bd6b,
+//     5be0cd19137e2179
+// };
 
 uint64_t Ch(uint64_t x, uint64_t y, uint64_t z)
 {
-    return (x & y) ^ (~x & z);
+    return ((x & y) ^ (~x & z));
+}
+
+uint64_t Maj(uint64_t x, uint64_t y, uint64_t z)
+{
+    return ((x & y) ^ (x & z) ^ (y & z));
+}
+
+uint64_t shr(uint64_t x, uint64_t n)
+{
+    return (x >> n);
+}
+
+uint64_t rotr(uint64_t x, uint64_t n)
+{
+    return ((x >> n) | (x << 32 - n));
+}
+
+uint64_t sigmaUpper0(uint64_t x)
+{
+    return (rotr(x, 2) ^ rotr(x, 13) ^ rotr(x, 22));
+}
+
+uint64_t sigmaUpper1(uint64_t x)
+{
+    return (rotr(x, 6) ^ rotr(x, 11) ^ rotr(x, 25));
+}
+
+uint64_t sigmaLower0(uint64_t x)
+{
+    return (rotr(x, 7) ^ rotr(x, 18) ^ rotr(x, 3));
+}
+
+uint64_t sigmaLower1(uint64_t x)
+{
+    return (rotr(x, 17) ^ rotr(x, 19) ^ rotr(x, 10));
 }
 
 void sha512()
 {
-    printf("SHA512");
+    printf("SHA512\n");
 }
 
 int main(int argc, char *argv[])
 {
+    uint64_t x = 0x0F0F0F0F;
+
     sha512();
+
+    printf("%" PRIX32 "\n", shr(x, 10));
+    printf("%" PRIX32 "\n", rotr(x, 10));
+    printf("%" PRIX32 "\n", sigmaUpper0(x));
+    printf("%" PRIX32 "\n", sigmaUpper1(x));
+    printf("%" PRIX32 "\n", sigmaLower0(x));
+    printf("%" PRIX32 "\n", sigmaLower1(x));
 
     return 0;
 }
