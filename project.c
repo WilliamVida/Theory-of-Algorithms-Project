@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <inttypes.h>
 
 // const SHA512_CONSTANTS[80] = {
 //     428a2f98d728ae22 7137449123ef65cd b5c0fbcfec4d3b2f e9b5dba58189dbbc
@@ -23,14 +24,21 @@
 //     4cc5d4becb3e42b6 597f299cfc657e2a 5fcb6fab3ad6faec 6c44198c4a475817
 // };
 
-int main(int argc, char *argv[])
-{
-    sha512();
+// const H[8] = {6a09e667f3bcc908, bb67ae8584caa73b, 3c6ef372fe94f82b, a54ff53a5f1d36f1, 510e527fade682d1, 9b05688c2b3e6c1f, 1f83d9abfb41bd6b, 5be0cd19137e2179};
 
-    return 0;
+uint64_t Ch(uint64_t x, uint64_t y, uint64_t z)
+{
+    return (x & y) ^ (~x & z);
 }
 
 void sha512()
 {
     printf("SHA512");
+}
+
+int main(int argc, char *argv[])
+{
+    sha512();
+
+    return 0;
 }
