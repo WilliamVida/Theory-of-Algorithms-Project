@@ -44,7 +44,7 @@ const uint64_t K[] = {
 
 // SHA-512 initial hash values consisting of eight 64-bit words, in hex.
 // Section 5.3.5 and pages 15-16 of the Secure Hash Standard.
-const uint64_t H[] = {
+uint64_t H[] = {
     0x6a09e667f3bcc908,
     0xbb67ae8584caa73b,
     0x3c6ef372fe94f82b,
@@ -54,38 +54,143 @@ const uint64_t H[] = {
     0x1f83d9abfb41bd6b,
     0x5be0cd19137e2179};
 
+enum Status
+{
+    READ,
+    PAD,
+    // PAD0,
+    // PAD1,
+    END
+};
+
+union Block
+{
+    // uint8_t eightBits[128];
+    // uint32_t thirtyTwoBits[32];
+    // uint64_t sixtyFourBits[16];
+    uint8_t bytes[128];
+    uint32_t words[32];
+    uint64_t sixf[16];
+    // uint8_t bytes[64];
+    // uint32_t words[16];
+    // uint64_t sixf[8];
+};
+
+// https://en.wikipedia.org/wiki/SHA-2#Pseudocode
+int next_block(FILE *f, union Block *B, enum Status *S, uint64_t *nobits)
+{
+    size_t nobytes;
+
+    if (*S == END)
+    {
+        return 0;
+    }
+    else if (*S == READ)
+    {
+        nobytes = fread(B->bytes, 1, 64, f);
+        *nobits = *nobits + (8 * nobytes);
+
+        if (nobytes == 64)
+        {
+            return 1;
+        }
+        else if (nobytes <= 55)
+        {
+            B->bytes[nobytes++] = 0x80;
+            while (nobytes++ < 56)
+            {
+                B->bytes[nobytes] = 0x00;
+            }
+            B->sixf[7] = *nobits;
+            *S = END;
+        }
+        else
+        {
+            B->bytes[nobytes] = 0x80;
+            while (nobytes++ < 64)
+            {
+                B->bytes[nobytes] = 0x00;
+            }
+            *S = PAD;
+        }
+    }
+    else if (*S == PAD)
+    {
+        nobytes = 0;
+
+        while (nobytes++ < 56)
+        {
+            B->bytes[nobytes] = 0x00;
+        }
+
+        B->sixf[7] = *nobits;
+        *S = END;
+    }
+
+    return 1;
+}
+
 void sha512()
 {
     printf("SHA-512\n");
     printf("===============\n");
+
+    // int i, t;
+
+    // Section 6.4.2 and page 24 of the Secure Hash Standard.
+    // for (t = 0; t < 16; t++)
+    // {
+    // }
+
+    // Section 6.4.2 and page 24 of the Secure Hash Standard.
+    // for (t = 0; t < 64; t++)
+    // {
+    // }
+
+    // Section 6.2.2 and page 25 of the Secure Hash Standard.
+    // a = H[0];
+    // b = H[1];
+    // c = H[2];
+    // d = H[3];
+    // e = H[4];
+    // f = H[5];
+    // g = H[6];
+    // h = H[7];
+
+    // Section 6.4.2 and page 24 of the Secure Hash Standard.
+    // H[0] = a + H[0];
+    // H[1] = b + H[1];
+    // H[2] = c + H[2];
+    // H[3] = d + H[3];
+    // H[4] = e + H[4];
+    // H[5] = f + H[5];
+    // H[6] = g + H[6];
+    // H[7] = h + H[7];
 }
 
 int main(int argc, char *argv[])
 {
     sha512();
 
-    uint64_t x = 0xF1234567;
-    uint64_t y = 0x0A0A0A0A;
-    uint64_t z = 0xB0B0B0B0;
+    int i;
+    union Block B;
+    uint64_t nobits = 0;
+    enum Status S = READ;
 
-    uint64_t ans;
+    FILE *f;
+    f = fopen(argv[1], "r");
 
-    ans = CH(x, y, z);
-    printf("CH(%08" PRIX64 ",%08" PRIX64 ",%08" PRIX64 ") = %08" PRIX64 "\n", x, y, z, ans);
+    while (next_block(f, &B, &S, &nobits))
+    {
+        for (i = 0; i < 16; i++)
+        {
+            printf("%08" PRIX64 " ", B.words[i]);
+        }
+        printf("\n");
+    }
 
-    ans = MAJ(x, y, z);
-    printf("MAJ(%08" PRIX64 ",%08" PRIX64 ",%08" PRIX64 ") = %08" PRIX64 "\n", x, y, z, ans);
-
-    printf("ROTL(%08" PRIX64 ") -> %08" PRIX64 "\n", x, ROTL(x, 4));
-    printf("ROTR(%08" PRIX64 ") -> %08" PRIX64 "\n", x, ROTR(x, 4));
-    printf("SHR(%08" PRIX64 ") -> %08" PRIX64 "\n", x, SHR(x, 4));
-    printf("SIG0(%08" PRIX64 " -> %08" PRIX64 "\n", x, SIG0(x));
-    printf("SIG1(%08" PRIX64 " -> %08" PRIX64 "\n", x, SIG1(x));
-    printf("Sig0(%08" PRIX64 " -> %08" PRIX64 "\n", x, Sig0(x));
-    printf("Sig1(%08" PRIX64 " -> %08" PRIX64 "\n", x, Sig1(x));
-
-    printf("K[0] = %08" PRIX64 "\tK[63] = %08" PRIX64 "\n", K[0], K[79]);
-    printf("H[0] = %08" PRIX64 "\tH[7] = %08" PRIX64 "\n", H[0], H[7]);
+    fclose(f);
+    printf("Total bits read: %d.\n", nobits);
 
     return 0;
 }
