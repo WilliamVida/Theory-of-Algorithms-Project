@@ -1,12 +1,10 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#define W 64
-
 // SHA-512 operations.
 // Section 2.2.2 and pages 5-6 of the Secure Hash Standard.
-#define ROTL(x, n) ((x << n) | (x >> (W - n)))
-#define ROTR(x, n) ((x >> n) | (x << (W - n)))
+#define ROTL(x, n) ((x << n) | (x >> (64 - n)))
+#define ROTR(x, n) ((x >> n) | (x << (64 - n)))
 #define SHR(x, n) (x >> n)
 
 // SHA-512 functions.
@@ -42,18 +40,6 @@ const uint64_t K[] = {
     0x28db77f523047d84, 0x32caab7b40c72493, 0x3c9ebe0a15c9bebc, 0x431d67c49c100d4c,
     0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817};
 
-// SHA-512 initial hash values consisting of eight 64-bit words, in hex.
-// Section 5.3.5 and pages 15-16 of the Secure Hash Standard.
-uint64_t H[] = {
-    0x6a09e667f3bcc908,
-    0xbb67ae8584caa73b,
-    0x3c6ef372fe94f82b,
-    0xa54ff53a5f1d36f1,
-    0x510e527fade682d1,
-    0x9b05688c2b3e6c1f,
-    0x1f83d9abfb41bd6b,
-    0x5be0cd19137e2179};
-
 enum Status
 {
     READ,
@@ -65,9 +51,6 @@ enum Status
 
 union Block
 {
-    // uint8_t eightBits[128];
-    // uint32_t thirtyTwoBits[32];
-    // uint64_t sixtyFourBits[16];
     uint8_t bytes[128];
     uint32_t words[32];
     uint64_t sixf[16];
@@ -77,120 +60,145 @@ union Block
 };
 
 // https://en.wikipedia.org/wiki/SHA-2#Pseudocode
-int next_block(FILE *f, union Block *B, enum Status *S, uint64_t *nobits)
+int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
 {
     size_t nobytes;
-
     if (*S == END)
     {
         return 0;
     }
     else if (*S == READ)
     {
-        nobytes = fread(B->bytes, 1, 64, f);
+        nobytes = fread(M->bytes, 1, 80, f);
         *nobits = *nobits + (8 * nobytes);
 
+        // Enough room for padding.
         if (nobytes == 64)
         {
-            return 1;
+            // This happens when we can read 64 bytes from f.
+            // Do nothing.
         }
-        else if (nobytes <= 55)
+        else if (nobytes < 56)
         {
-            B->bytes[nobytes++] = 0x80;
-            while (nobytes++ < 56)
-            {
-                B->bytes[nobytes] = 0x00;
-            }
-            B->sixf[7] = *nobits;
+            M->bytes[nobytes++] = 0x80;
+            for (nobytes++; nobytes < 56; nobytes++)
+                M->bytes[nobytes] = 0x00;
+            M->sixf[7] = *nobits;
             *S = END;
         }
         else
         {
-            B->bytes[nobytes] = 0x80;
-            while (nobytes++ < 64)
-            {
-                B->bytes[nobytes] = 0x00;
-            }
+            M->bytes[nobytes] = 0x80;
+            for (nobytes++; nobytes < 80; nobytes++)
+                M->bytes[nobytes] = 0x00;
             *S = PAD;
         }
     }
     else if (*S == PAD)
     {
-        nobytes = 0;
-
-        while (nobytes++ < 56)
-        {
-            B->bytes[nobytes] = 0x00;
-        }
-
-        B->sixf[7] = *nobits;
+        for (nobytes = 0; nobytes < 56; nobytes++)
+            M->bytes[nobytes] = 0x00;
+        M->sixf[7] = *nobits;
         *S = END;
     }
-
     return 1;
 }
 
-void sha512()
+int next_hash(union Block *M, uint64_t H[])
 {
-    printf("SHA-512\n");
-    printf("===============\n");
+    // Message schedule, section 6.4.2.
+    uint64_t W[80];
 
-    // int i, t;
+    // Iterator for W.
+    int t;
 
-    // Section 6.4.2 and page 24 of the Secure Hash Standard.
-    // for (t = 0; t < 16; t++)
-    // {
-    // }
+    // Temporary variables.
+    uint64_t a, b, c, d, e, f, g, h, T1, T2;
 
-    // Section 6.4.2 and page 24 of the Secure Hash Standard.
-    // for (t = 0; t < 64; t++)
-    // {
-    // }
+    // Section 6.4.2, part 1.
+    for (t = 0; t <= 15; t++)
+        W[t] = M->words[t];
 
-    // Section 6.2.2 and page 25 of the Secure Hash Standard.
-    // a = H[0];
-    // b = H[1];
-    // c = H[2];
-    // d = H[3];
-    // e = H[4];
-    // f = H[5];
-    // g = H[6];
-    // h = H[7];
+    for (t = 16; t <= 79; t++)
+        W[t] = Sig1(W[t - 2]) + W[t - 7] + Sig0(W[t - 15]) + W[t - 16];
 
-    // Section 6.4.2 and page 24 of the Secure Hash Standard.
-    // H[0] = a + H[0];
-    // H[1] = b + H[1];
-    // H[2] = c + H[2];
-    // H[3] = d + H[3];
-    // H[4] = e + H[4];
-    // H[5] = f + H[5];
-    // H[6] = g + H[6];
-    // H[7] = h + H[7];
+    // Section 6.4.2, part 2.
+    a = H[0];
+    b = H[1];
+    c = H[2];
+    d = H[3];
+    e = H[4];
+    f = H[5];
+    g = H[6];
+    h = H[7];
+
+    // Section 6.4.2, part 3.
+    for (t = 0; t <= 79; t++)
+    {
+        T1 = h + SIG1(e) + CH(e, f, g) + K[t] + W[t];
+        T2 = SIG0(a) + MAJ(a, b, c);
+        h = g;
+        g = f;
+        f = e;
+        e = d + T1;
+        d = c;
+        c = b;
+        b = a;
+        a = T1 + T2;
+    }
+
+    // Section 6.4.2, part 4.
+    H[0] = a + H[0];
+    H[1] = b + H[1];
+    H[2] = c + H[2];
+    H[3] = d + H[3];
+    H[4] = e + H[4];
+    H[5] = f + H[5];
+    H[6] = g + H[6];
+    H[7] = h + H[7];
+
+    return 0;
+}
+
+// ============= ADD =============
+// Implement command line argument.
+// Error checking.
+int sha512(FILE *f, uint64_t H[])
+{
+    union Block M;
+    uint64_t nobits = 0;
+    enum Status S = READ;
+    while (next_block(f, &M, &S, &nobits))
+    {
+        next_hash(&M, H);
+    }
+    return 0;
 }
 
 int main(int argc, char *argv[])
 {
-    sha512();
-
-    int i;
-    union Block B;
-    uint64_t nobits = 0;
-    enum Status S = READ;
+    // SHA-512 initial hash values consisting of eight 64-bit words, in hex.
+    // Section 5.3.5 and pages 15-16 of the Secure Hash Standard.
+    uint64_t H[] = {
+        0x6a09e667f3bcc908,
+        0xbb67ae8584caa73b,
+        0x3c6ef372fe94f82b,
+        0xa54ff53a5f1d36f1,
+        0x510e527fade682d1,
+        0x9b05688c2b3e6c1f,
+        0x1f83d9abfb41bd6b,
+        0x5be0cd19137e2179};
 
     FILE *f;
     f = fopen(argv[1], "r");
+    sha512(f, H);
 
-    while (next_block(f, &B, &S, &nobits))
+    for (int i = 0; i < 8; i++)
     {
-        for (i = 0; i < 16; i++)
-        {
-            printf("%08" PRIX64 " ", B.words[i]);
-        }
-        printf("\n");
+        printf("%08" PRIX64, H[i]);
     }
 
+    printf("\n");
     fclose(f);
-    printf("Total bits read: %d.\n", nobits);
-
     return 0;
 }
