@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-// Endianess. Adapted from: https://developer.ibm.com/technologies/systems/articles/au-endianc/.
+// Endianness. Adapted from: https://developer.ibm.com/technologies/systems/articles/au-endianc/.
 #include <byteswap.h>
 const int _i = 1;
 #define islilend() ((*(char *)&_i) != 0)
@@ -129,9 +129,9 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
     }
 
     // Swap the byte order of the words if we're little endian.
-    if (islilend())
+    if (islilend()){
         for (int i = 0; i < 16; i++)
-            M->words[i] = bswap_32(M->words[i]);
+            M->words[i] = bswap_32(M->words[i]);}
 
     return 1;
 }
