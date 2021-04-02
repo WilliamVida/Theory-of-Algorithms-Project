@@ -55,7 +55,7 @@ enum Status
 
 union Block
 {
-    uint16_t bytes[64];
+    uint8_t bytes[128];
     uint64_t words[16];
     uint64_t sixf[16];
     // uint8_t bytes[64];
@@ -77,24 +77,24 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
     else if (*S == READ)
     {
         // Read bytes from the file.
-        nobytes = fread(M->bytes, 1, 64, f);
+        nobytes = fread(M->bytes, 1, 128, f);
 
         // Calculate the total bits read so far.
         *nobits = *nobits + (8 * nobytes);
 
         // Enough room for padding.
-        if (nobytes == 64)
+        if (nobytes == 128)
         {
             // This happens when we can read 64 bytes from f.
             // Do nothing.
         }
-        else if (nobytes < 56)
+        else if (nobytes < 120)
         {
             // M->bytes[nobytes] = 0x80;
             M->bytes[nobytes] = 0x100;
 
             // Append 0 bits.
-            for (nobytes++; nobytes < 56; nobytes++)
+            for (nobytes++; nobytes < 120; nobytes++)
             {
                 M->bytes[nobytes] = 0x00;
             }
@@ -112,7 +112,7 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
             M->bytes[nobytes] = 0x100;
 
             // Append 0 bits.
-            for (nobytes++; nobytes < 64; nobytes++)
+            for (nobytes++; nobytes < 128; nobytes++)
             {
                 M->bytes[nobytes] = 0x00;
             }
@@ -124,7 +124,7 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
     else if (*S == PAD)
     {
         // Append 0 bits.
-        for (nobytes = 0; nobytes < 56; nobytes++)
+        for (nobytes = 0; nobytes < 120; nobytes++)
         {
             M->bytes[nobytes] = 0x00;
         }
@@ -146,7 +146,7 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
     return 1;
 }
 
-// SHA-512 Hash Computation
+// SHA-512 Hash Computation.
 // Section 6.4.2 of the Secure Hash Standard.
 int next_hash(union Block *M, uint64_t H[])
 {
