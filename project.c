@@ -5,7 +5,7 @@
 // Endianness.
 // From: https://developer.ibm.com/technologies/systems/articles/au-endianc/.
 const int _i = 1;
-#define islilend() ((*(char *)&_i) != 0)
+#define is_little_endian() ((*(char *)&_i) != 0)
 
 // SHA-512 operations.
 // Section 2.2.2 and pages 5-6 of the Secure Hash Standard.
@@ -63,7 +63,6 @@ union Block
     // uint64_t sixf[8];
 };
 
-// https://en.wikipedia.org/wiki/SHA-2#Pseudocode
 int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
 {
     // Number of bytes read.
@@ -90,8 +89,7 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
         }
         else if (nobytes < 120)
         {
-            // M->bytes[nobytes] = 0x80;
-            M->bytes[nobytes] = 0x100;
+            M->bytes[nobytes] = 0x80;
 
             // Append 0 bits.
             for (nobytes++; nobytes < 120; nobytes++)
@@ -100,16 +98,14 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
             }
 
             // Append nobits as a big endian integer.
-            // M->sixf[7] = (islilend() ? bswap_64(*nobits) : *nobits);
-            M->sixf[15] = (islilend() ? bswap_64(*nobits) : *nobits);
+            M->sixf[15] = (is_little_endian() ? bswap_64(*nobits) : *nobits);
 
             // Change the status to END.
             *S = END;
         }
         else
         {
-            // M->bytes[nobytes] = 0x80;
-            M->bytes[nobytes] = 0x100;
+            M->bytes[nobytes] = 0x80;
 
             // Append 0 bits.
             for (nobytes++; nobytes < 128; nobytes++)
@@ -128,19 +124,19 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
         {
             M->bytes[nobytes] = 0x00;
         }
+
         // Append nobits as a big endian integer.
-        // M->sixf[7] = (islilend() ? bswap_64(*nobits) : *nobits);
-        M->sixf[15] = (islilend() ? bswap_64(*nobits) : *nobits);
+        M->sixf[15] = (is_little_endian() ? bswap_64(*nobits) : *nobits);
 
         // Change the status to END.
         *S = END;
     }
 
     // Swap the byte order of the words if it is little endian.
-    if (islilend())
+    if (is_little_endian())
     {
         for (int i = 0; i < 16; i++)
-            M->words[i] = bswap_32(M->words[i]);
+            M->words[i] = bswap_64(M->words[i]);
     }
 
     return 1;
