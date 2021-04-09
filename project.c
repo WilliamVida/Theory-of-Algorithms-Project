@@ -1,20 +1,21 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <byteswap.h>
+#include <string.h>
 
 // Endianness.
-// From: https://developer.ibm.com/technologies/systems/articles/au-endianc/.
+// From https://developer.ibm.com/technologies/systems/articles/au-endianc/.
 const int _i = 1;
 #define is_little_endian() ((*(char *)&_i) != 0)
 
 // SHA-512 operations.
-// Section 2.2.2 and pages 5-6 of the Secure Hash Standard.
+// Section 2.2.2 of the Secure Hash Standard.
 #define ROTL(_x, _n) ((_x << _n) | (_x >> (64 - _n)))
 #define ROTR(_x, _n) ((_x >> _n) | (_x << (64 - _n)))
 #define SHR(_x, _n) (_x >> _n)
 
 // SHA-512 functions.
-// Section 4.1.3 and page 11 of the Secure Hash Standard.
+// Section 4.1.3 of the Secure Hash Standard.
 #define CH(_x, _y, _z) ((_x & _y) ^ (~_x & _z))
 #define MAJ(_x, _y, _z) ((_x & _y) ^ (_x & _z) ^ (_y & _z))
 #define SIG0(_x) (ROTR(_x, 28) ^ ROTR(_x, 34) ^ ROTR(_x, 39))
@@ -23,7 +24,7 @@ const int _i = 1;
 #define Sig1(_x) (ROTR(_x, 19) ^ ROTR(_x, 61) ^ SHR(_x, 6))
 
 // SHA-512 constants consisting of 80 constant 64-bit words.
-// Section 4.2.3 and page 12 of the Secure Hash Standard.
+// Section 4.2.3 of the Secure Hash Standard.
 const uint64_t K[] = {
     0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc,
     0x3956c25bf348b538, 0x59f111f1b605d019, 0x923f82a4af194f9b, 0xab1c5ed5da6d8118,
@@ -46,6 +47,7 @@ const uint64_t K[] = {
     0x28db77f523047d84, 0x32caab7b40c72493, 0x3c9ebe0a15c9bebc, 0x431d67c49c100d4c,
     0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817};
 
+// For keeping track of where we are with the input message/padding.
 enum Status
 {
     READ,
@@ -58,9 +60,6 @@ union Block
     uint8_t bytes[128];
     uint64_t words[16];
     uint64_t sixf[16];
-    // uint8_t bytes[64];
-    // uint32_t words[16];
-    // uint64_t sixf[8];
 };
 
 int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
@@ -84,11 +83,12 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
         // Enough room for padding.
         if (nobytes == 128)
         {
-            // This happens when we can read 64 bytes from f.
+            // This happens when we can read 128 bytes from the file.
             // Do nothing.
         }
         else if (nobytes < 120)
         {
+            // Append 1 bit.
             M->bytes[nobytes] = 0x80;
 
             // Append 0 bits.
@@ -105,6 +105,7 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
         }
         else
         {
+            // Append 1 bit.
             M->bytes[nobytes] = 0x80;
 
             // Append 0 bits.
@@ -155,15 +156,17 @@ int next_hash(union Block *M, uint64_t H[])
     // Temporary variables.
     uint64_t a, b, c, d, e, f, g, h, T1, T2;
 
-    // Section 6.4.2, part 1.
+    // Preparing the message schedule.
+    // Section 6.4.2, part 1 of the Secure Hash Standard.
     for (t = 0; t <= 15; t++)
         W[t] = M->words[t];
 
-    // Section 6.4.2, part 1.
+    // Section 6.4.2, part 1 of the Secure Hash Standard.
     for (t = 16; t <= 79; t++)
         W[t] = Sig1(W[t - 2]) + W[t - 7] + Sig0(W[t - 15]) + W[t - 16];
 
-    // Section 6.4.2, part 2.
+    // Initialise the variables.
+    // Section 6.4.2, part 2 of the Secure Hash Standard.
     a = H[0];
     b = H[1];
     c = H[2];
@@ -173,7 +176,7 @@ int next_hash(union Block *M, uint64_t H[])
     g = H[6];
     h = H[7];
 
-    // Section 6.4.2, part 3.
+    // Section 6.4.2, part 3 of the Secure Hash Standard.
     for (t = 0; t <= 79; t++)
     {
         T1 = h + SIG1(e) + CH(e, f, g) + K[t] + W[t];
@@ -188,7 +191,7 @@ int next_hash(union Block *M, uint64_t H[])
         a = T1 + T2;
     }
 
-    // Section 6.4.2, part 4.
+    // Section 6.4.2, part 4 of the Secure Hash Standard.
     H[0] = a + H[0];
     H[1] = b + H[1];
     H[2] = c + H[2];
@@ -222,14 +225,25 @@ int sha512(FILE *f, uint64_t H[])
     return 0;
 }
 
+void sha512_output(FILE *f, uint64_t H[])
+{
+    // Calculate the SHA-512 hash value of f.
+    sha512(f, H);
+
+    for (int i = 0; i < 8; i++)
+    {
+        printf("%08" PRIX64, H[i]);
+    }
+    printf("\n");
+}
+
 // ============= ADD =============
-// Implement command line argument.
 // Error checking.
 // ===============================
 int main(int argc, char *argv[])
 {
     // SHA-512 initial hash values consisting of eight 64-bit words, in hex.
-    // Section 5.3.5 and pages 15-16 of the Secure Hash Standard.
+    // Section 5.3.5 of the Secure Hash Standard.
     uint64_t H[] = {
         0x6a09e667f3bcc908,
         0xbb67ae8584caa73b,
@@ -243,22 +257,57 @@ int main(int argc, char *argv[])
     // File pointer.
     FILE *f;
 
-    // Open the file.
-    f = fopen(argv[1], "r");
+    printf("SHA-512 Hashing\n");
+    printf("===================================\n");
 
-    // Calculate the SHA-512 hash value of f.
-    sha512(f, H);
-
-    printf("actual   ");
-    for (int i = 0; i < 8; i++)
+    // Open the file if it was inputted.
+    if ((f = fopen(argv[1], "r")) != NULL)
     {
-        printf("%08" PRIX64, H[i]);
-    }
-    printf("\n");
-    printf("expected ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f\n");
+        printf("SHA-512 of a file.\n");
 
-    // Close the file.
-    fclose(f);
+        printf("actual   ");
+        // Get the hash value.
+        sha512_output(f, H);
+        printf("expected ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f\n");
+
+        // Close the file.
+        fclose(f);
+
+        return 0;
+    }
+    // Text input.
+    else if ((strcmp(argv[1], "t")) == 0)
+    {
+        printf("SHA-512 of an input text.\n");
+
+        // Write the text input to a file and then close it.
+        f = fopen("input.txt", "w");
+        fprintf(f, argv[2]);
+        fclose(f);
+
+        // Open the file.
+        f = fopen("input.txt", "r");
+
+        // Get the hash value.
+        sha512_output(f, H);
+
+        // Close the file.
+        fclose(f);
+
+        return 0;
+    }
+    // If no file was entered.
+    else if (argv[1] == NULL)
+    {
+        printf("Error: No file was entered.\n");
+        return 0;
+    }
+    // If the file does not exist.
+    else
+    {
+        printf("Error: The inputted file does not exist.\n");
+        return 0;
+    }
 
     return 0;
 }
