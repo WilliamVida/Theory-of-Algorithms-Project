@@ -2,6 +2,8 @@
 #include <inttypes.h>
 #include <byteswap.h>
 #include <string.h>
+#include <getopt.h>
+#include <stdlib.h>
 
 // Endianness.
 // From https://developer.ibm.com/technologies/systems/articles/au-endianc/.
@@ -225,6 +227,7 @@ int sha512(FILE *f, uint64_t H[])
     return 0;
 }
 
+// Output the SHA-512 hash value.
 void sha512_output(FILE *f, uint64_t H[])
 {
     // Calculate the SHA-512 hash value of f.
@@ -237,9 +240,13 @@ void sha512_output(FILE *f, uint64_t H[])
     printf("\n");
 }
 
-// ============= ADD =============
-// Error checking.
-// ===============================
+void print_usage()
+{
+    printf("Usage: ./project -f [file name] | temp -t '[text input]' \n");
+    exit(2);
+}
+
+// From https://www.youtube.com/watch?v=SjyR74lbZOc&ab_channel=theurbanpenguin
 int main(int argc, char *argv[])
 {
     // SHA-512 initial hash values consisting of eight 64-bit words, in hex.
@@ -254,59 +261,93 @@ int main(int argc, char *argv[])
         0x1f83d9abfb41bd6b,
         0x5be0cd19137e2179};
 
+    // If the input is not correct.
+    if (argc < 2)
+    {
+        print_usage();
+    }
+
     // File pointer.
     FILE *f;
 
-    printf("SHA-512 Hashing\n");
-    printf("===================================\n");
+    // Variables.
+    int option;
+    int fflag = 0;
+    int tflag = 0;
 
-    // Open the file if it was inputted.
-    if ((f = fopen(argv[1], "r")) != NULL)
+    printf("SHA-512\n");
+    printf("============================\n");
+
+    while ((option = getopt(argc, argv, "t:f:h")) != -1)
     {
-        printf("SHA-512 of a file.\n");
+        switch (option)
+        {
+        case 'f':
+            if (fflag)
+            {
+                print_usage();
+            }
+            else
+            {
+                fflag++;
+                tflag++;
+            }
 
-        printf("actual   ");
-        // Get the hash value.
-        sha512_output(f, H);
-        printf("expected ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f\n");
+            printf("SHA-512 of a file.\n");
 
-        // Close the file.
-        fclose(f);
+            // Read the file.
+            f = fopen(argv[2], "r");
 
-        return 0;
-    }
-    // Text input.
-    else if ((strcmp(argv[1], "t")) == 0)
-    {
-        printf("SHA-512 of an input text.\n");
+            if ((f = fopen(argv[1], "r")) == NULL)
+            {
+                printf("Error: The inputted file does not exist.\n");
+                return 0;
+            }
 
-        // Write the text input to a file and then close it.
-        f = fopen("input.txt", "w");
-        fprintf(f, argv[2]);
-        fclose(f);
+            // Get the hash value.
+            sha512_output(f, H);
 
-        // Open the file.
-        f = fopen("input.txt", "r");
+            // Close the file.
+            fclose(f);
 
-        // Get the hash value.
-        sha512_output(f, H);
+            break;
+        case 't':
+            if (tflag)
+            {
+                print_usage();
+            }
+            else
+            {
+                fflag++;
+                tflag++;
+            }
 
-        // Close the file.
-        fclose(f);
+            printf("SHA-512 of an input text.\n");
 
-        return 0;
-    }
-    // If no file was entered.
-    else if (argv[1] == NULL)
-    {
-        printf("Error: No file was entered.\n");
-        return 0;
-    }
-    // If the file does not exist.
-    else
-    {
-        printf("Error: The inputted file does not exist.\n");
-        return 0;
+            // Write the text input to a file and then close it.
+            f = fopen("input.txt", "w");
+            fprintf(f, argv[2]);
+            fclose(f);
+
+            // Open the file.
+            f = fopen("input.txt", "r");
+
+            // Get the hash value.
+            sha512_output(f, H);
+
+            // Close the file.
+            fclose(f);
+
+            break;
+        case 'h':
+            printf("Help\n");
+            printf("To run ./project -f [file name] | temp -t '[text input]'\n");
+            printf("For example, to get the hash value of a file run ./project -f input.txt\n");
+            printf("For example, to get the hash value of a text input run ./project -t 'abc'\n");
+            break;
+        default:
+            printf("Error\n");
+        }
     }
 
     return 0;
