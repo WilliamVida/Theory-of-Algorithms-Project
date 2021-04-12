@@ -49,6 +49,18 @@ const uint64_t K[] = {
     0x28db77f523047d84, 0x32caab7b40c72493, 0x3c9ebe0a15c9bebc, 0x431d67c49c100d4c,
     0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817};
 
+// SHA-512 initial hash values consisting of eight 64-bit words, in hex.
+// Section 5.3.5 of the Secure Hash Standard.
+uint64_t H[] = {
+    0x6a09e667f3bcc908,
+    0xbb67ae8584caa73b,
+    0x3c6ef372fe94f82b,
+    0xa54ff53a5f1d36f1,
+    0x510e527fade682d1,
+    0x9b05688c2b3e6c1f,
+    0x1f83d9abfb41bd6b,
+    0x5be0cd19137e2179};
+
 // For keeping track of where we are with the input message/padding.
 enum Status
 {
@@ -235,9 +247,47 @@ void sha512_output(FILE *f, uint64_t H[])
 
     for (int i = 0; i < 8; i++)
     {
-        printf("%08" PRIX64, H[i]);
+        printf("%08" PRIx64, H[i]);
     }
     printf("\n");
+}
+
+void sha512_hash_comparison(int id, char *test_file, char *expected_output)
+{
+    printf("Test %d\n", id);
+
+    FILE *f;
+    f = fopen(test_file, "r");
+
+    // printf("\n");
+    // int c;
+    // if (f)
+    // {
+    //     while ((c = getc(f)) != EOF)
+    //         putchar(c);
+    // }
+    // printf("\n");
+
+    printf("SHA-512 of test inputs\n");
+    sha512_output(f, H);
+    fclose(f);
+
+    printf("Expected\n");
+    printf("%s\n", expected_output);
+    printf("\n");
+
+    // if (strcmp(sha512_output(f, H), expected_output) == 0)
+    // {
+    //     printf("The test is a match.\n");
+    // }
+}
+
+void run_tests()
+{
+    sha512_hash_comparison(1, "tests/test1.txt", "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e");
+    sha512_hash_comparison(2, "tests/test2.txt", "9971f8715b30e9f5311403c461aa43cafdb6d7473f2ba2559595cea749acefd1180a447fad604617422614a3891286cd78ef67e1012e39246ce64b8ba9e403d0");
+    sha512_hash_comparison(3, "tests/test3.txt", "8ba760cac29cb2b2ce66858ead169174057aa1298ccd581514e6db6dee3285280ee6e3a54c9319071dc8165ff061d77783100d449c937ff1fb4cd1bb516a69b9");
+    sha512_hash_comparison(4, "input.txt", "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f");
 }
 
 void print_usage()
@@ -249,18 +299,6 @@ void print_usage()
 // From https://www.youtube.com/watch?v=SjyR74lbZOc&ab_channel=theurbanpenguin
 int main(int argc, char *argv[])
 {
-    // SHA-512 initial hash values consisting of eight 64-bit words, in hex.
-    // Section 5.3.5 of the Secure Hash Standard.
-    uint64_t H[] = {
-        0x6a09e667f3bcc908,
-        0xbb67ae8584caa73b,
-        0x3c6ef372fe94f82b,
-        0xa54ff53a5f1d36f1,
-        0x510e527fade682d1,
-        0x9b05688c2b3e6c1f,
-        0x1f83d9abfb41bd6b,
-        0x5be0cd19137e2179};
-
     // If the input is not correct.
     if (argc < 2)
     {
@@ -278,10 +316,15 @@ int main(int argc, char *argv[])
     printf("SHA-512\n");
     printf("============================\n");
 
-    while ((option = getopt(argc, argv, "t:f:h")) != -1)
+    while ((option = getopt(argc, argv, "t:f:hv")) != -1)
     {
         switch (option)
         {
+            // For the tests.
+        case 'v':
+            run_tests();
+            break;
+            // For a file input.
         case 'f':
             if (fflag)
             {
@@ -296,21 +339,22 @@ int main(int argc, char *argv[])
             printf("SHA-512 of a file.\n");
 
             // Read the file.
-            f = fopen(argv[2], "r");
+            if ((f = fopen(argv[2], "r")) != NULL)
+            {
+                // Get the hash value.
+                sha512_output(f, H);
 
-            if ((f = fopen(argv[1], "r")) == NULL)
+                // Close the file.
+                fclose(f);
+            }
+            else
             {
                 printf("Error: The inputted file does not exist.\n");
                 return 0;
             }
 
-            // Get the hash value.
-            sha512_output(f, H);
-
-            // Close the file.
-            fclose(f);
-
             break;
+            // For a text input.
         case 't':
             if (tflag)
             {
@@ -339,6 +383,7 @@ int main(int argc, char *argv[])
             fclose(f);
 
             break;
+            // For help.
         case 'h':
             printf("Help\n");
             printf("To run ./project -f [file name] | temp -t '[text input]'\n");
