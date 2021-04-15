@@ -252,44 +252,6 @@ void sha512_output(FILE *f, uint64_t H[])
     printf("\n");
 }
 
-void sha512_hash_comparison(int id, char *test_file, char *expected_output)
-{
-    printf("Test %d\n", id);
-
-    FILE *f;
-    f = fopen(test_file, "r");
-
-    // printf("\n");
-    // int c;
-    // if (f)
-    // {
-    //     while ((c = getc(f)) != EOF)
-    //         putchar(c);
-    // }
-    // printf("\n");
-
-    printf("SHA-512 of test inputs\n");
-    sha512_output(f, H);
-    fclose(f);
-
-    printf("Expected\n");
-    printf("%s\n", expected_output);
-    printf("\n");
-
-    // if (strcmp(sha512_output(f, H), expected_output) == 0)
-    // {
-    //     printf("The test is a match.\n");
-    // }
-}
-
-void run_tests()
-{
-    sha512_hash_comparison(1, "tests/test1.txt", "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e");
-    sha512_hash_comparison(2, "tests/test2.txt", "9971f8715b30e9f5311403c461aa43cafdb6d7473f2ba2559595cea749acefd1180a447fad604617422614a3891286cd78ef67e1012e39246ce64b8ba9e403d0");
-    sha512_hash_comparison(3, "tests/test3.txt", "8ba760cac29cb2b2ce66858ead169174057aa1298ccd581514e6db6dee3285280ee6e3a54c9319071dc8165ff061d77783100d449c937ff1fb4cd1bb516a69b9");
-    sha512_hash_comparison(4, "input.txt", "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f");
-}
-
 void print_usage()
 {
     printf("Usage: ./project -f [file name] | temp -t '[text input]' \n");
@@ -313,17 +275,13 @@ int main(int argc, char *argv[])
     int fflag = 0;
     int tflag = 0;
 
-    printf("SHA-512\n");
-    printf("============================\n");
+    // printf("SHA-512\n");
+    // printf("============================\n");
 
     while ((option = getopt(argc, argv, "t:f:hv")) != -1)
     {
         switch (option)
         {
-            // For the tests.
-        case 'v':
-            run_tests();
-            break;
             // For a file input.
         case 'f':
             if (fflag)
@@ -335,8 +293,6 @@ int main(int argc, char *argv[])
                 fflag++;
                 tflag++;
             }
-
-            printf("SHA-512 of a file.\n");
 
             // Read the file.
             if ((f = fopen(argv[2], "r")) != NULL)
@@ -385,13 +341,13 @@ int main(int argc, char *argv[])
             break;
             // For help.
         case 'h':
-            printf("Help\n");
+            printf("Help.\n");
             printf("To run ./project -f [file name] | temp -t '[text input]'\n");
-            printf("For example, to get the hash value of a file run ./project -f input.txt\n");
-            printf("For example, to get the hash value of a text input run ./project -t 'abc'\n");
+            printf("For example, to get the hash value of a file, run ./project -f input.txt\n");
+            printf("For example, to get the hash value of a text input, run ./project -t 'abc'\n");
             break;
         default:
-            printf("Error\n");
+            printf("Error.\n");
         }
     }
 

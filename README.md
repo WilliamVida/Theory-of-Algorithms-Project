@@ -25,10 +25,6 @@ To see the help menu, in a command line type
 ```sh
 ./project -h
 ```
-To run the test, in a command line type
-```sh
-./project -v
-```
 To get the SHA-512 hash of a file, in a command line type
 ```sh
 ./project -f [name of the file]
@@ -37,9 +33,11 @@ To get the SHA-512 hash of a piece of text,  in a command line type the text ins
 ```sh
 ./project -t '[text input]'
 ```
-
-### Tests
-the tests are run...
+To run the tests, in a command line type
+```sh
+make project
+make tests
+```
 
 ## Explanation of the SHA-512 Algorithm
 SHA-512 is a hashing algorithm that produces a hash value based on a given data. Hashing algorithms are used in internet security and digital certificates. The SHA-256 algorithm is used by Bitcoin's blockchain for hashing [1]. SHA stands for Secure Hash Algorithm. SHA-512 is part of the SHA-2 hashing function set which was designed by the United States National Security Agency.
@@ -58,7 +56,6 @@ SHA-512 and SHA-256 are used for password hashing. Certain parts of the United S
 ## Answers
 ### Why Can't We Reverse the SHA-512 Algorithm to Retrieve the Original Message from a Hash Digest?
 A SHA-512 hash value will take a long time to be reversed as it is a hashing function, not an encryption function. SHA-512 was designed to not to be able to reversed. The only known way to get the original message would be to try every single possible input which would take a long time.
-
 
 https://crypto.stackexchange.com/questions/45377/why-cant-we-reverse-hashes
 https://en.wikipedia.org/wiki/Cryptographic_hash_function
