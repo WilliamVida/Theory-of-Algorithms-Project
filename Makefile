@@ -5,7 +5,7 @@ EXECS=project
 project: project.c
 	cc -o project project.c
 
-tests: tests.sh
+test: tests.sh
 	./tests.sh
 
 clean:

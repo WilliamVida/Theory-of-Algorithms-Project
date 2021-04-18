@@ -159,7 +159,7 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
 
 // SHA-512 Hash Computation.
 // Section 6.4.2 of the Secure Hash Standard.
-int next_hash(union Block *M, uint64_t H[])
+int next_hash(union Block *M)
 {
     // Message schedule, section 6.4.2.
     uint64_t W[80];
@@ -218,8 +218,8 @@ int next_hash(union Block *M, uint64_t H[])
     return 0;
 }
 
-// Fuction that applies the SHA-512 algorithm on a file.
-int sha512(FILE *f, uint64_t H[])
+// Fuction that applies the SHA-512 algorithm on a file outputs the SHA-512 hash value.
+void sha512(FILE *f)
 {
     // The current block.
     union Block M;
@@ -233,17 +233,8 @@ int sha512(FILE *f, uint64_t H[])
     // Loop through the (preprocessed) blocks.
     while (next_block(f, &M, &S, &nobits))
     {
-        next_hash(&M, H);
+        next_hash(&M);
     }
-
-    return 0;
-}
-
-// Output the SHA-512 hash value.
-void sha512_output(FILE *f, uint64_t H[])
-{
-    // Calculate the SHA-512 hash value of f.
-    sha512(f, H);
 
     for (int i = 0; i < 8; i++)
     {
@@ -258,7 +249,7 @@ void print_usage()
     exit(2);
 }
 
-// From https://www.youtube.com/watch?v=SjyR74lbZOc&ab_channel=theurbanpenguin
+// getopt from https://www.youtube.com/watch?v=SjyR74lbZOc&ab_channel=theurbanpenguin.
 int main(int argc, char *argv[])
 {
     // If the input is not correct.
@@ -275,14 +266,11 @@ int main(int argc, char *argv[])
     int fflag = 0;
     int tflag = 0;
 
-    // printf("SHA-512\n");
-    // printf("============================\n");
-
     while ((option = getopt(argc, argv, "t:f:hv")) != -1)
     {
         switch (option)
         {
-            // For a file input.
+        // For a file input.
         case 'f':
             if (fflag)
             {
@@ -298,7 +286,7 @@ int main(int argc, char *argv[])
             if ((f = fopen(argv[2], "r")) != NULL)
             {
                 // Get the hash value.
-                sha512_output(f, H);
+                sha512(f);
 
                 // Close the file.
                 fclose(f);
@@ -310,7 +298,7 @@ int main(int argc, char *argv[])
             }
 
             break;
-            // For a text input.
+        // For a text input.
         case 't':
             if (tflag)
             {
@@ -333,18 +321,18 @@ int main(int argc, char *argv[])
             f = fopen("input.txt", "r");
 
             // Get the hash value.
-            sha512_output(f, H);
+            sha512(f);
 
             // Close the file.
             fclose(f);
 
             break;
-            // For help.
+        // For help.
         case 'h':
             printf("Help.\n");
-            printf("To run ./project -f [file name] | temp -t '[text input]'\n");
-            printf("For example, to get the hash value of a file, run ./project -f input.txt\n");
-            printf("For example, to get the hash value of a text input, run ./project -t 'abc'\n");
+            printf("To get the SHA-512 of a file, type \"./project -f [file name]\" or to get the SHA-512 of a text input, type \"./project -t '[text input]'\"\n");
+            printf("For example, to get the hash value of a file, run \"./project -f input.txt\".\n");
+            printf("For example, to get the hash value of a text input, run \"./project -t 'abc'\"\n");
             break;
         default:
             printf("Error.\n");
