@@ -61,7 +61,7 @@ uint64_t H[] = {
     0x1f83d9abfb41bd6b,
     0x5be0cd19137e2179};
 
-// For keeping track of where we are with the input message/padding.
+// For keeping track of where the program is with the input message/padding.
 enum Status
 {
     READ,
@@ -97,7 +97,7 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
         // Enough room for padding.
         if (nobytes == 128)
         {
-            // This happens when we can read 128 bytes from the file.
+            // This happens when 128 bytes is read from the file.
             // Do nothing.
         }
         else if (nobytes < 120)
@@ -111,7 +111,7 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
                 M->bytes[nobytes] = 0x00;
             }
 
-            // Append nobits as a big endian integer.
+            // Append nobits as a big-endian integer.
             M->sixf[15] = (is_little_endian() ? bswap_64(*nobits) : *nobits);
 
             // Change the status to END.
@@ -140,14 +140,14 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits)
             M->bytes[nobytes] = 0x00;
         }
 
-        // Append nobits as a big endian integer.
+        // Append nobits as a big-endian integer.
         M->sixf[15] = (is_little_endian() ? bswap_64(*nobits) : *nobits);
 
         // Change the status to END.
         *S = END;
     }
 
-    // Swap the byte order of the words if it is little endian.
+    // Swap the byte order of the words if it is little-endian.
     if (is_little_endian())
     {
         for (int i = 0; i < 16; i++)
@@ -218,7 +218,7 @@ int next_hash(union Block *M)
     return 0;
 }
 
-// Fuction that applies the SHA-512 algorithm on a file outputs the SHA-512 hash value.
+// Function that applies the SHA-512 algorithm on a file outputs the SHA-512 hash value.
 void sha512(FILE *f)
 {
     // The current block.
@@ -238,7 +238,7 @@ void sha512(FILE *f)
 
     for (int i = 0; i < 8; i++)
     {
-        printf("%08" PRIx64, H[i]);
+        printf("%016" PRIx64, H[i]);
     }
     printf("\n");
 }
@@ -310,8 +310,6 @@ int main(int argc, char *argv[])
                 tflag++;
             }
 
-            printf("SHA-512 of an input text.\n");
-
             // Write the text input to a file and then close it.
             f = fopen("input.txt", "w");
             fprintf(f, argv[2]);
@@ -330,9 +328,9 @@ int main(int argc, char *argv[])
         // For help.
         case 'h':
             printf("Help.\n");
-            printf("To get the SHA-512 of a file, type \"./project -f [file name]\" or to get the SHA-512 of a text input, type \"./project -t '[text input]'\"\n");
+            printf("To get the SHA-512 of a file, type \"./project -f [file name]\" or to get the SHA-512 of a text input, type \"./project -t '[text input]'\" or  './project -t \"[text input]\"'.\n");
             printf("For example, to get the hash value of a file, run \"./project -f input.txt\".\n");
-            printf("For example, to get the hash value of a text input, run \"./project -t 'abc'\"\n");
+            printf("For example, to get the hash value of a text input, run \"./project -t 'abc'\".\n");
             break;
         default:
             printf("Error.\n");

@@ -14,6 +14,7 @@ Clone the repository
 ```sh
 git clone https://github.com/WilliamVida/Theory-of-Algorithms-Project
 ```
+
 ### Running the Program
 After downloading the repository, enter the directory and in a command line type
 ```sh
@@ -27,9 +28,10 @@ To get the SHA-512 hash of a file, in a command line type
 ```sh
 ./project -f [name of the file]
 ```
-To get the SHA-512 hash of a piece of text,  in a command line type the text inside single quotes
+To get the SHA-512 hash of a piece of text,  in a command line type the text inside single quotes or double quotes. If the text input contains a single quote then only double quotes would work.
 ```sh
 ./project -t '[text input]'
+./project -t "[text input]"
 ```
 
 ### Running the Tests
