@@ -25,7 +25,7 @@ const int _i = 1;
 #define Sig0(_x) (ROTR(_x, 1) ^ ROTR(_x, 8) ^ SHR(_x, 7))
 #define Sig1(_x) (ROTR(_x, 19) ^ ROTR(_x, 61) ^ SHR(_x, 6))
 
-// SHA-512 constants consisting of 80 constant 64-bit words.
+// SHA-512 constants consisting of the first 64 bits of the parts of the cube roots of the first 80 prime numbers.
 // Section 4.2.3 of the Secure Hash Standard.
 const uint64_t K[] = {
     0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc,
@@ -49,7 +49,7 @@ const uint64_t K[] = {
     0x28db77f523047d84, 0x32caab7b40c72493, 0x3c9ebe0a15c9bebc, 0x431d67c49c100d4c,
     0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817};
 
-// SHA-512 initial hash values consisting of eight 64-bit words, in hex.
+// SHA-512 initial hash values consisting of eight 64-bit words, in hex. They are made up of the first sixty-four bits of the fractional parts of the square roots of the first eight prime numbers
 // Section 5.3.5 of the Secure Hash Standard.
 uint64_t H[] = {
     0x6a09e667f3bcc908,
@@ -175,11 +175,12 @@ int next_hash(union Block *M)
     for (t = 0; t <= 15; t++)
         W[t] = M->words[t];
 
+    // Preparing the message schedule.
     // Section 6.4.2, part 1 of the Secure Hash Standard.
     for (t = 16; t <= 79; t++)
         W[t] = Sig1(W[t - 2]) + W[t - 7] + Sig0(W[t - 15]) + W[t - 16];
 
-    // Initialise the variables.
+    // Initialise the eight variables.
     // Section 6.4.2, part 2 of the Secure Hash Standard.
     a = H[0];
     b = H[1];
@@ -190,6 +191,7 @@ int next_hash(union Block *M)
     g = H[6];
     h = H[7];
 
+    // 80 rounds.
     // Section 6.4.2, part 3 of the Secure Hash Standard.
     for (t = 0; t <= 79; t++)
     {
@@ -236,6 +238,7 @@ void sha512(FILE *f)
         next_hash(&M);
     }
 
+    // Out the hash value.
     for (int i = 0; i < 8; i++)
     {
         printf("%016" PRIx64, H[i]);
