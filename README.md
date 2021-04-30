@@ -41,6 +41,15 @@ make project
 make test
 ```
 
+If an error similar to the below is shown on the command line
+```sh
+./tests.sh: line 2: $'\r': command not found
+./tests.sh: line 3: syntax error near unexpected token `$'{\r''
+'/tests.sh: line 3: `result () {
+make: *** [Makefile:9: test] Error 2
+```
+then follow the fix [here](https://askubuntu.com/a/1266050).
+
 ## Explanation of the SHA-512 Algorithm
 SHA-512 is a hashing algorithm that produces a 128 character hash value based on an input. Hashing algorithms are used in internet security and digital certificates. SHA stands for Secure Hash Algorithm. SHA-512 is part of the SHA-2 hashing function set which was designed by the United States National Security Agency. The SHA-256 algorithm is used by Bitcoin's blockchain for hashing [1].
 
