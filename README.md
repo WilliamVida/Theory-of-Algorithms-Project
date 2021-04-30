@@ -3,7 +3,7 @@ Author: William Vida <br>
 Lecturer: Ian McLoughlin
 
 ## Description
-This repository contains an implementation of the SHA-512 algorithm in C which I was required to produce as part of my final year module Theory of Algorithms. This project uses command-line arguments to get the SHA-512 hash value of a given file or text input. Click on [Project Instructions.md](Project%20Instructions.md) to view the project brief. Click on [NIST.FIPS.180-4.pdf](NIST.FIPS.180-4.pdf) to view the Secure Hash Standard (SHS).
+This repository contains an implementation of the SHA-512 algorithm in C which I was required to produce as part of my final year module Theory of Algorithms. This project uses command-line arguments to get the SHA-512 hash value of a given file or text input. Click on [Project Instructions.md](Project%20Instructions.md) to view the project brief. Enter Secure Hash Standard and click on [NIST.FIPS.180-4.pdf](NIST.FIPS.180-4.pdf) to view the Secure Hash Standard (SHS).
 
 ## Compilation
 ### Prerequisites
@@ -28,7 +28,7 @@ To get the SHA-512 hash of a file, in a command line type
 ```sh
 ./project -f [name of the file]
 ```
-To get the SHA-512 hash of a piece of text,  in a command line type the text inside single quotes or double quotes. If the text input contains a single quote then only double quotes would work.
+To get the SHA-512 hash of a piece of text, in a command line type the text inside single quotes or double quotes. If the text input contains a single quote then only double quotes would work.
 ```sh
 ./project -t '[text input]'
 ./project -t "[text input]"
@@ -53,7 +53,7 @@ Then the message processing is done by taking one block of 1024 bits at a time f
 Finally, the final 128 character length hash value is shown. The SHA-512 hash value of "abc" would be "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f".
 
 ## Why Is the SHA-512 Algorithm Important
-SHA-512 and SHA-256 are used for password hashing. If an attacker gains access to a database containing passwords, the attacker will only be able to see incomprehensible hash values. However, the attacker might use a dictionary of words and their hash value and hope that one of the hashes match one in the dictionary. Certain parts of the United States government require the use of SHA-2 for the protection of important information. The SHA-512 algorithm is part of the same set of hashing functions as SHA-256, called SHA-2. SHA-2 is implemented in security applications such as Transport Layer Security (TLS), Secure Shell Protocol (SSH) and Internet Protocol Security (IPsec). SHA-256 makes up a very important piece of Bitcoin.  Cryptocurrencies such as Bitcoin use SHA-256 in two main ways, for mining and the creation of Bitcoin addresses [3] [4]. 
+SHA-512 and SHA-256 are used for password hashing. If an attacker gains access to a database containing passwords, the attacker will only be able to see incomprehensible hash values. However, the attacker might use a dictionary of words and their hash value and hope that one of the hashes match one in the dictionary. Certain parts of the United States government require the use of SHA-2 for the protection of important information. The SHA-512 algorithm is part of the same set of hashing functions as SHA-256, called SHA-2. SHA-2 is implemented in security applications such as Transport Layer Security (TLS), Secure Shell Protocol (SSH) and Internet Protocol Security (IPsec). SHA-256 makes up a very important piece of Bitcoin. Cryptocurrencies such as Bitcoin use SHA-256 in two main ways, for mining and the creation of Bitcoin addresses [3] [4]. 
 
 ## Answers
 ### Why Can't We Reverse the SHA-512 Algorithm to Retrieve the Original Message From a Hash Digest?
